@@ -1,0 +1,865 @@
+#include<lpc21xx.h>
+
+ 
+
+#include<stdlib.h>
+
+ 
+
+#include<string.h>
+
+ 
+
+#include"my_define.h"
+
+ 
+
+ 
+
+ 
+
+extern char tag_no[3][10];
+
+ 
+
+extern char vehicle_number[3][10];
+
+ 
+
+extern char tag_buff[10];
+
+ 
+
+extern unsigned char r_flag;
+
+ 
+
+extern char buff[20];
+
+ 
+
+extern char tag_buff[10];
+
+ 
+
+extern char vech_buff[5],bal_buff[4];
+
+ 
+
+extern int i,amount;
+
+ 
+
+char ch_no[10];
+
+ 
+
+volatile unsigned char lock1=0,lock2=0;
+
+ 
+
+volatile unsigned char e0_flag=0,e1_flag=0;
+
+ 
+
+unsigned int flag=0,found=0,keyV;
+
+ 
+
+int j,k;
+
+ 
+
+u32 adcVal,dist,vol;
+
+ 
+
+float sensor_volt = 0;
+
+void init_fun()
+
+{
+
+      initLCD();
+
+      InitUART0();
+
+      enable_eint();
+
+      i2c_init();
+
+      Init_ADC();
+
+      Init_KPM();
+
+}
+
+void process_sensor()
+
+ 
+
+{
+
+ 
+
+     //int distance=0;
+
+ 
+
+     //distance=Read_ADC(1);
+
+ 
+
+     cmdLCD(0x01);
+
+ 
+
+     cmdLCD(0x80);
+
+ 
+
+        strLCD("FASTAG RFID SYSTEM");
+
+ 
+
+        delay_ms(3000);
+
+ 
+
+        //cmdLCD(0x01);
+
+ 
+
+     //while(distance>=10&&distance<=SENSOR_THRESHOLD);
+
+ 
+
+     while(1)
+
+ 
+
+     {
+
+ 
+
+           //sensor_volt = Read_ADC(1);
+
+ 
+
+           Read_ADC(1,&adcVal,&sensor_volt);
+
+ 
+
+           vol=sensor_volt*(1023/5);
+
+           dist=(6787/(vol-3))-4;
+
+ 
+
+           if(e0_flag || e1_flag)
+
+ 
+
+           {
+
+ 
+
+                return;
+
+ 
+
+         }
+
+ 
+
+           //if(sensor_volt >= 1.0)
+
+ 
+
+           if((dist <= 20))
+
+ 
+
+           {
+
+ 
+
+               break;
+
+ 
+
+           }
+
+           cmdLCD(0xC0);
+
+           u32LCD(dist);
+
+ 
+
+           delay_ms(50);
+
+ 
+
+    }
+
+     //distance=0;
+
+ 
+
+     cmdLCD(0x01);
+
+ 
+
+     cmdLCD(0x80);
+
+ 
+
+     delay_ms(1000);
+
+ 
+
+     strLCD("Vechile detected");
+
+ 
+
+     delay_ms(800);
+
+ 
+
+     cmdLCD(0x01);
+
+ 
+
+     strLCD("WELCOME TOLL PLAZA");
+
+ 
+
+     cmdLCD(0xc0);
+
+ 
+
+     delay_ms(1000);
+
+ 
+
+     strLCD("WAITING FOR CARD");
+
+ 
+
+     r_flag=0;
+
+ 
+
+     i=0;
+
+ 
+
+     memset(buff,'\0',20);
+
+ 
+
+     //if((e0_flag==0) && (e1_flag==0))
+
+ 
+
+     //UART0_Str("card\r\n");
+
+ 
+
+     while(r_flag<2);
+
+ 
+
+     /*{
+
+ 
+
+        if(e0_flag || e1_flag)
+
+ 
+
+        {
+
+ 
+
+            return;
+
+ 
+
+        }
+
+ 
+
+     }*/
+
+     cmdLCD(CLEAR_LCD);
+
+ 
+
+     cmdLCD(GOTO_LINE1_POS0);
+
+ 
+
+     strLCD("WELCOME TOLL PLAZA");
+
+ 
+
+     cmdLCD(GOTO_LINE2_POS0);
+
+ 
+
+     strLCD("Checking..");
+
+ 
+
+     delay_ms(500);
+
+ 
+
+     strLCD((char *)buff);
+
+ 
+
+     delay_ms(1000);
+
+ 
+
+     card_campare();
+
+ 
+
+     }
+
+void card_campare()
+
+ {
+
+     for(i=0;i<MAX_VEHICLES;i++)
+
+     {        
+
+     //     i2c_eeprom_seqread(SLAVE_ADDR,(ID_ADDR+i*10),(u8*)tag_buff,10);
+
+           delay_ms(100);
+
+                //if(strcmp(tag_buff,(char*)buff)==0)
+
+           if(strcmp(tag_no[i],(char*)buff)==0)
+
+           {
+
+                flag=1;
+
+           //   cmdLCD(0x01);
+
+                cmdLCD(GOTO_LINE3_POS0);
+
+                strLCD("valid card");           
+
+                i2c_eeprom_seqread(SLAVE_ADDR,(BAL_ADDR+i*4),(u8*)bal_buff,4);
+
+                amount=atoi(bal_buff);
+
+                cmdLCD(GOTO_LINE4_POS0);
+
+                u32LCD(amount);
+
+                delay_ms(1000);
+
+                cmdLCD(0x01);
+
+                if(amount>=40)
+
+                {
+
+                      amount=amount-40;
+
+                //amount-=20;
+
+                k=amount;
+
+                j=0;
+
+                while(k)
+
+                {
+
+                      j++;
+
+                      k/=10;
+
+                }
+
+                k=amount;
+
+                bal_buff[j--]='\0';
+                      while(k)
+
+                      {
+
+                           bal_buff[j--]=(k%10)+48;
+                           k/=10;
+                      }
+
+ 
+
+                      //bal_buff[j]='\0';
+                    i2c_eeprom_pagewrite(SLAVE_ADDR,(BAL_ADDR+i*4),(u8*)bal_buff,4);
+
+                      cmdLCD(GOTO_LINE4_POS0);
+
+                      strLCD("MONEY DEDUCTED");
+
+                    display(i,amount);
+
+                }   
+
+                else
+
+                {
+
+                      cmdLCD(GOTO_LINE4_POS0);
+
+                      strLCD("INSUFFICIENT BAL");
+
+                      delay_ms(1000);
+
+                      cmdLCD(0x01);
+
+                      cmdLCD(0x80);
+
+                      strLCD("PRESS SW1");
+
+                      strLCD("For Recharge");
+
+                      e0_flag=0;
+
+                      while(e0_flag==1);
+
+                      e0_flag=0;
+
+                      recharge_card();
+
+                }   
+
+           }
+
+    }
+
+     if(flag==0)
+
+     {
+
+           cmdLCD(0x01);
+
+           cmdLCD(GOTO_LINE3_POS0);
+
+           strLCD("invalid card");
+
+           delay_ms(1000);
+
+           cmdLCD(0x01);
+
+           cmdLCD(0x80);
+
+           strLCD("PRESS SW2");
+
+           strLCD("For Payment");
+
+           e1_flag=0;
+
+           while(e1_flag==1);
+
+           e1_flag=0;
+
+           manual_deduct();
+
+     }
+
+}
+
+void open_gate()
+
+{
+
+IODIR0|=MOTOR_PIN1|MOTOR_PIN2;
+
+IOSET0=MOTOR_PIN1; //SETP0.0
+
+IOCLR0= MOTOR_PIN2; //CLEAR P0.1
+
+ cmdLCD(0X01);
+
+ cmdLCD(DSP_ON_CUR_ON);
+
+ strLCD("Gate opening.....");
+
+ delay_ms(1000);
+
+ IOCLR0=MOTOR_PIN1;
+
+ IOCLR0=MOTOR_PIN2;
+
+ }
+
+void close_gate()
+
+{
+
+IODIR0|=MOTOR_PIN1|MOTOR_PIN2;
+
+IOCLR0=MOTOR_PIN1; //SET P0.0
+
+IOSET0= MOTOR_PIN2;
+
+ cmdLCD(0X01);
+
+ cmdLCD(DSP_ON_CUR_ON);
+
+ strLCD("Gate closing .....");
+
+ delay_ms(1000);
+
+ IOCLR0=MOTOR_PIN1;
+
+ IOCLR0=MOTOR_PIN2;
+
+ }
+
+void recharge_card()
+
+{
+
+     int j=7;
+
+     cmdLCD(0x01);
+
+     cmdLCD(GOTO_LINE1_POS0);
+
+     strLCD("recharge card");
+
+     delay_ms(2000);
+
+     cmdLCD(0x01);
+
+     cmdLCD(GOTO_LINE1_POS0);
+
+     strLCD("enter card no")    ;                    
+
+     delay_ms(1000);
+
+     keyV=ReadNum();
+
+     cmdLCD(0x01);
+
+     cmdLCD(GOTO_LINE3_POS0);
+
+     u32LCD(keyV);
+
+     delay_ms(1000);
+
+     for(j=7;j>=0;j--)
+
+     {
+
+           ch_no[j]=(keyV%10)+48;
+
+           keyV/=10;
+
+     }
+
+     ch_no[8]='\0';
+
+     cmdLCD(GOTO_LINE4_POS0);
+
+     strLCD(ch_no);
+
+     delay_ms(2000);
+
+     flag=0;   
+
+     for(i=0;i<3;i++)
+
+     {
+
+           if(strcmp(ch_no,tag_no[i])==0)
+
+           {
+
+                 flag=1;
+
+                 cmdLCD(GOTO_LINE4_POS0);
+
+                 strLCD("valid");
+
+                 delay_ms(1000);
+
+                 i2c_eeprom_seqread(SLAVE_ADDR,(BAL_ADDR+i*4),(u8*)bal_buff,4);
+
+                 amount=atoi(bal_buff);
+
+                 cmdLCD(0x01);
+
+                 cmdLCD(0x80);
+
+                 strLCD("enter amount");
+
+                 keyV=ReadNum();
+
+                 amount+=keyV;
+
+                 k=amount;
+
+                j=0;
+
+                 while(k)
+
+                {
+
+                      j++;
+
+                      k/=10;
+
+                }
+
+                k=amount;
+
+                bal_buff[j--]='\0';
+                 while(k)
+                {
+                           bal_buff[j--]=(k%10)+48;
+                           k/=10;
+
+                           //j++;
+                }
+
+                //bal_buff[j]='\0';
+               i2c_eeprom_pagewrite(SLAVE_ADDR,(BAL_ADDR+i*4),(u8*)bal_buff,4);
+
+                cmdLCD(GOTO_LINE4_POS0);
+
+                strLCD("MONEY ADDED");
+
+                delay_ms(2000);
+
+                display(i,amount);
+
+           }
+
+     }
+
+     if(flag==0)
+
+           {
+
+                 cmdLCD(GOTO_LINE4_POS0);
+
+                      strLCD("INVALID CARD");
+
+                      delay_ms(2000);
+
+                      recharge_card();
+
+           }
+
+     //   goto Label;
+
+           //process_sensor();
+
+}
+
+ 
+
+void manual_deduct()
+
+{
+
+    int amount;
+
+ 
+
+    /* Display MANUAL DEDUCTION */
+
+    cmdLCD(0x01);
+
+    cmdLCD(GOTO_LINE1_POS0);
+
+    strLCD("MANUAL DEDUCTION");
+
+    delay_ms(2000);
+
+ 
+
+    /* Enter amount */
+
+    cmdLCD(0x01);
+
+    cmdLCD(GOTO_LINE1_POS0);
+
+    strLCD("ENTER AMOUNT");
+
+ 
+
+    amount = ReadNum();
+
+ 
+
+    /* Display entered amount */
+
+    cmdLCD(0x01);
+
+    cmdLCD(GOTO_LINE1_POS0);
+
+    strLCD("AMOUNT: ");
+
+ 
+
+    u32LCD(amount);
+
+    delay_ms(1000);
+
+ 
+
+    /* Payment successful */
+
+    cmdLCD(0x01);
+
+    cmdLCD(GOTO_LINE1_POS0);
+
+    strLCD("PAYMENT SUCCESS");
+
+    delay_ms(2000);
+
+ 
+
+    /* Gate open */
+
+    cmdLCD(0x01);
+
+    cmdLCD(GOTO_LINE1_POS0);
+
+    strLCD("GATE OPEN");
+
+ 
+
+    /* Use your existing gate-open function here */
+
+    open_gate();
+
+ 
+
+    delay_ms(5000);
+
+ 
+
+    /* Gate close */
+
+    cmdLCD(0x01);
+
+    cmdLCD(GOTO_LINE1_POS0);
+
+    strLCD("GATE CLOSE");
+
+ 
+
+    /* Use your existing gate-close function here */
+
+    close_gate();
+
+ 
+
+    delay_ms(2000);
+
+}
+
+void enable_eint(void)
+
+{
+
+     PINSEL0|=0x20000000|0x80000000;
+
+     SETBIT(VICIntEnable ,EINT0_CHNO);
+
+     SETBIT(VICIntEnable ,EINT1_CHNO);
+
+     VICVectCntl1 =(1<<5|EINT0_CHNO);
+
+     VICVectCntl2 =(1<<5|EINT1_CHNO);
+
+     VICVectAddr1=(unsigned int)eint0_isr;
+
+     VICVectAddr2=(unsigned int)eint1_isr;
+
+     SETBIT(EXTMODE,0);
+
+     SETBIT(EXTMODE,1);
+
+     EXTINT=0X03;
+
+     EXTPOLAR=0;
+
+}
+
+void eint0_isr(void)__irq 
+
+{
+
+//   recharge_card();
+
+     e0_flag=1;
+
+     EXTINT =1<<0;
+
+     delay_ms(1000);
+
+     VICVectAddr=0;
+
+}
+
+void eint1_isr(void) __irq
+
+{
+
+  //  manual_deduct();
+
+     e1_flag=1;
+
+     EXTINT =1<<1;
+
+     delay_ms(1000);
+
+     VICVectAddr=0;
+
+}
+
+void display(int j,int amount)
+
+{
+
+     cmdLCD(0x01);
+
+     cmdLCD(GOTO_LINE1_POS0);
+
+     strLCD(tag_no[j]);
+
+     cmdLCD(GOTO_LINE2_POS0);
+
+     strLCD(vehicle_number[j]);
+
+     cmdLCD(GOTO_LINE3_POS0);
+
+     u32LCD(amount);
+
+     cmdLCD(GOTO_LINE4_POS0);
+
+     strLCD("THANK YOU ");
+
+     delay_ms(2000);
+
+     open_gate();
+
+     cmdLCD(0x01);
+
+     close_gate();
+
+}

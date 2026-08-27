@@ -145,41 +145,41 @@ Initialize System
 Wait for Vehicle
   ↓
 Vehicle Detected?
-  ↓
-YES
-  ↓
-Display Welcome Message
-  ↓
-Wait for Card
-  ↓
-Read Card Number
-  ↓
-Validate Card
-  ↓
-Card Valid?
- ┌───────────────┴───────────────┐
- NO                              YES
- │                                │
- ↓                                ↓
-manual payment         
- │                            Check Balance
- └───────────────┐                ↓
-                 │           Balance Sufficient?
-                 │            ┌──────┴──────┐
-                 │            NO            YES
-                 │            │              │
-                 │            ↓              ↓
-                 │       Recharge card     Deduct Toll
-                 |                           ↓
-                 │                       Update Balance
-                 └────────────┤              ↓
-                              └──────→      Open Gate
-                                            ↓
-                                       Vehicle Passes
-                                            ↓
-                                        Close Gate
-                                            ↓
-                               Wait for Next Vehicle
+  ├── NO ───────────────→ Wait for Vehicle
+  │
+  └── YES
+        ↓
+    Wait for Card
+        ↓
+    Read Card Number
+        ↓
+    Validate Card
+        ↓
+    Card Valid?
+    ├── NO ──→ Manual Payment
+    │
+    └── YES
+          ↓
+      Check Balance
+          ↓
+      Balance Sufficient?
+      ├── NO ──→ Recharge Card
+      │
+      └── YES
+            ↓
+        Deduct Toll
+            ↓
+        Update Balance
+            ↓
+          Open Gate
+            ↓
+        Vehicle Passes
+            ↓
+          Close Gate
+            ↓
+      Wait for Next Vehicle
+            ↓
+      Repeat Process
 🔘 Interrupt Operations
 
 Switch 1 — Recharge

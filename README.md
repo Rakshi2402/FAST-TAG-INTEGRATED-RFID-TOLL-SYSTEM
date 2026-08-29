@@ -136,6 +136,42 @@ The peripherals should be tested individually before integrating the complete sy
 10. Integrate DC motor gate control.
 11. Integrate all modules into the complete toll system.
 
+🔘RFID_TOLL_PROJECT_STRUCTURE
+│
+├── main.c
+├── fun.c
+├── dummy_fun.h
+│
+├── ADC.c
+├── adc_define.h
+│
+├── lcd.c
+├── lcd.h
+├── lcd_define.h
+│
+├── kpm.c
+├── kpm.h
+├── kpm_define.h
+│
+├── uart_interrupt.c
+├── urat.h
+├── uart_define.h
+│
+├── i2c.c
+├── i2c.h
+├── i2c_define.h
+│
+├── i2c_eeprom.c
+├── i2c_eeprom.h
+├── eeprom.c
+│
+├── delay.c
+├── delay.h
+│
+├── types.h
+├── define.h
+└── my_define.h
+
 
 🔘 Interrupt Operations
 

@@ -135,42 +135,48 @@ The peripherals should be tested individually before integrating the complete sy
 9. Integrate the distance sensor.
 10. Integrate DC motor gate control.
 11. Integrate all modules into the complete toll system.
+Complete Project Flow
 
-🔘RFID_TOLL_PROJECT_STRUCTURE
-│
-├── main.c
-├── fun.c
-├── dummy_fun.h
-│
-├── ADC.c
-├── adc_define.h
-│
-├── lcd.c
-├── lcd.h
-├── lcd_define.h
-│
-├── kpm.c
-├── kpm.h
-├── kpm_define.h
-│
-├── uart_interrupt.c
-├── urat.h
-├── uart_define.h
-│
-├── i2c.c
-├── i2c.h
-├── i2c_define.h
-│
-├── i2c_eeprom.c
-├── i2c_eeprom.h
-├── eeprom.c
-│
-├── delay.c
-├── delay.h
-│
-├── types.h
-├── define.h
-└── my_define.h
+You can explain the complete project in this simple flow:
+
+Vehicle Approaches
+↓
+Distance Sensor Detects Vehicle
+↓
+LCD Displays Welcome Message
+↓
+System Waits for RFID Card
+↓
+RFID Reader Reads Card Number
+↓
+Card Number Sent to LPC2148 Through UART Interrupt
+↓
+Controller Checks Card Details
+↓
+Vehicle Number and Balance Retrieved from EEPROM Using I2C
+↓
+LCD Displays Card ID, Vehicle Number and Balance
+↓
+Toll Amount Deducted
+↓
+Updated Balance Stored
+↓
+DC Motor Opens Toll Gate
+↓
+Vehicle Moves Forward
+↓
+Sensor Detects Vehicle Moving Away
+↓
+DC Motor Closes Toll Gate
+
+Additional Features
+
+Switch 1 → Recharge Fast-Tag using keypad
+
+Switch 2 → Manual deduction when RFID/Fast-Tag has an issue
+
+
+
 
 
 🔘 Interrupt Operations

@@ -135,48 +135,6 @@ The peripherals should be tested individually before integrating the complete sy
 9. Integrate the distance sensor.
 10. Integrate DC motor gate control.
 11. Integrate all modules into the complete toll system.
-Complete Project Flow
-
-You can explain the complete project in this simple flow:
-
-Vehicle Approaches
-↓
-Distance Sensor Detects Vehicle
-↓
-LCD Displays Welcome Message
-↓
-System Waits for RFID Card
-↓
-RFID Reader Reads Card Number
-↓
-Card Number Sent to LPC2148 Through UART Interrupt
-↓
-Controller Checks Card Details
-↓
-Vehicle Number and Balance Retrieved from EEPROM Using I2C
-↓
-LCD Displays Card ID, Vehicle Number and Balance
-↓
-Toll Amount Deducted
-↓
-Updated Balance Stored
-↓
-DC Motor Opens Toll Gate
-↓
-Vehicle Moves Forward
-↓
-Sensor Detects Vehicle Moving Away
-↓
-DC Motor Closes Toll Gate
-
-Additional Features
-
-Switch 1 → Recharge Fast-Tag using keypad
-
-Switch 2 → Manual deduction when RFID/Fast-Tag has an issue
-
-
-
 
 
 🔘 Interrupt Operations
